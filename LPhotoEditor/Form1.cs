@@ -216,7 +216,21 @@ namespace LPhotoEditor
 
         //обработчик поворота изображения
         private void button2_Click(object sender, EventArgs e)
-        { 
+        {
+            if (pictureBox1.Image == null)
+                return;
+            //поворот изображения делается здесь
+            img.RotateFlip(RotateFlipType.Rotate90FlipNone);
+            pictureBox1.Width = img.Width;
+            pictureBox1.Height = img.Height;
+            ReInitDrawRegion();
+            InitDrawRegion(img.Width, img.Height);
+            UpdateImage(img);
+            selectedRegion = Rectangle.Empty;
+            _backBuffer.Graphics.DrawImage(img, 0, 0);
+
+            pictureBox1.Refresh();
+
 
         }
         //функция масштабирования изображения в хорошем качестве
