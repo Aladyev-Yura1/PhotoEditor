@@ -302,6 +302,33 @@ namespace LPhotoEditor
         //кнопка сохранения
         private void button5_Click(object sender, EventArgs e)
         {
+            var win = new SaveFileDialog() { Filter = @"JPEG (*.jpeg)|*.jpeg|PNG (*.png)|*.png|BMP (*.bmp,*.dib)|*.bmp;*.dib" };
+            if (win.ShowDialog() != DialogResult.OK)
+            {
+                win.Dispose();
+                return;
+            }
+            var a = win.FileName;
+            win.AddExtension = true;
+            var index = win.FilterIndex;
+            FileStream s = File.Create(a);
+            //сохраним в выбранном формате
+            if (index == 1)
+            {
+                img.Save(s, ImageFormat.Jpeg);
+            }
+            else
+                if (index == 2)
+                {
+                    img.Save(s, ImageFormat.Png);
+                }
+                else
+                    if (index == 3)
+                    {
+                        img.Save(s, ImageFormat.Bmp);
+                    }
+
+            s.Close();
         }
 
         //Кнопка черно-белое
