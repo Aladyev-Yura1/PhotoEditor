@@ -291,12 +291,72 @@ namespace LPhotoEditor
             var f = new ResizeForm(this);
             f.Show();
         }
+        //размывка изображения (изобаржение, выделенная область, сила размытия)
+        private static Bitmap Blur(Bitmap image, Rectangle bounds, Int32 blurSize)
+        {
+            Bitmap blurred = new Bitmap(image.Width, image.Height);
+            var rectangle = new Rectangle(0, 0, image.Width, image.Height);
+            // сделаем копию изображения
+            using (Graphics graphics = Graphics.FromImage(blurred))
+                graphics.DrawImage(image, new Rectangle(0, 0, image.Width, image.Height),
+                    new Rectangle(0, 0, image.Width, image.Height), GraphicsUnit.Pixel);
 
+            // вычислим количество и средний цвет пикселей в картинке
+            for (Int32 xx = rectangle.X; xx < rectangle.X + rectangle.Width; xx++)
+            {
+                for (Int32 yy = rectangle.Y; yy < rectangle.Y + rectangle.Height; yy++)
+                {
+                    Int32 avgR = 0, avgG = 0, avgB = 0;
+                    Int32 blurPixelCount = 0;
+
+                    // средний цвет всех пикселей
+                    // нужно убедится что мы не вылезем за пределы изображения
+                    for (Int32 x = xx; (x < xx + blurSize && x < image.Width); x++)
+                    {
+                        for (Int32 y = yy; (y < yy + blurSize && y < image.Height); y++)
+                        {
+                            //только вне выделенного прямоугольника
+
+                            Color pixel = blurred.GetPixel(x, y);
+
+                            avgR += pixel.R;
+                            avgG += pixel.G;
+                            avgB += pixel.B;
+
+                            blurPixelCount++;
+
+                        }
+                    }
+
+                    avgR = avgR / blurPixelCount;
+                    avgG = avgG / blurPixelCount;
+                    avgB = avgB / blurPixelCount;
+
+                    // теперь мы знаем средний цвет, поставим его всем пикселям
+                    for (Int32 x = xx; x < xx + blurSize && x < image.Width && x < rectangle.Width; x++)
+                        for (Int32 y = yy; y < yy + blurSize && y < image.Height && y < rectangle.Height; y++)
+                        {
+                            //кроме выделенной области
+                            if (!bounds.Contains(x, y))
+                            {
+                                blurred.SetPixel(x, y, Color.FromArgb(avgR, avgG, avgB));
+                            }
+                        }
+                }
+            }
+
+            return blurred;
+        }
 
         //кнопка фокус
         private void button4_Click(object sender, EventArgs e)
         {
-      
+
+            if (pictureBox1.Image == null || selectedRegion == Rectangle.Empty)
+                return;
+            img = Blur(img, selectedRegion, 2);
+
+            UpdateImage(img);
         }
 
         //кнопка сохранения
@@ -331,10 +391,38 @@ namespace LPhotoEditor
             s.Close();
         }
 
+        private static Bitmap BlackAndWhite(Bitmap image)
+        {
+            Bitmap blackAndWhite = new System.Drawing.Bitmap(image.Width, image.Height);
+            Rectangle rectangle = new Rectangle(0, 0, image.Width, image.Height);
+
+            using (Graphics graphics = System.Drawing.Graphics.FromImage(blackAndWhite))
+                graphics.DrawImage(image, new System.Drawing.Rectangle(0, 0, image.Width, image.Height),
+                    new Rectangle(0, 0, image.Width, image.Height), GraphicsUnit.Pixel);
+
+
+            for (Int32 xx = rectangle.X; xx < rectangle.X + rectangle.Width && xx < image.Width; xx++)
+            {
+                for (Int32 yy = rectangle.Y; yy < rectangle.Y + rectangle.Height && yy < image.Height; yy++)
+                {
+
+                    Color pixel = blackAndWhite.GetPixel(xx, yy);
+                    Int32 avg = (pixel.R + pixel.G + pixel.B) / 3;
+
+                    blackAndWhite.SetPixel(xx, yy, Color.FromArgb(255, avg, avg, avg));
+                }
+            }
+
+            return blackAndWhite;
+        }
         //Кнопка черно-белое
         private void button6_Click(object sender, EventArgs e)
         {
-            
+            if (pictureBox1.Image == null)
+                return;
+            img = BlackAndWhite(img);
+
+            UpdateImage(img);
         }
     }
 }
